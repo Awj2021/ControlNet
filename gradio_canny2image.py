@@ -16,7 +16,7 @@ from cldm.ddim_hacked import DDIMSampler
 
 
 apply_canny = CannyDetector()
-
+# This code is used for the Gradio interface.
 model = create_model('./models/cldm_v15.yaml').cpu()
 model.load_state_dict(load_state_dict('./models/control_sd15_canny.pth', location='cuda'))
 model = model.cuda()

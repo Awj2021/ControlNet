@@ -418,6 +418,8 @@ class DDPM(pl.LightningModule):
 
     def get_input(self, batch, k):
         x = batch[k]
+        # if isinstance(x, list):
+        #     x = torch.tensor(x)
         if len(x.shape) == 3:
             x = x[..., None]
         x = rearrange(x, 'b h w c -> b c h w')
