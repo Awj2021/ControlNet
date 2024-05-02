@@ -25,15 +25,17 @@ ddim_sampler = DDIMSampler(model)
 
 def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold):
     with torch.no_grad():
+        # Preprocess input image
         img = resize_image(HWC3(input_image), image_resolution)
         H, W, C = img.shape
 
         detected_map = apply_canny(img, low_threshold, high_threshold)
         detected_map = HWC3(detected_map)
-
+        # Use the cv2.Canny function to get the edge map.
         control = torch.from_numpy(detected_map.copy()).float().cuda() / 255.0
-        control = torch.stack([control for _ in range(num_samples)], dim=0)
-        control = einops.rearrange(control, 'b h w c -> b c h w').clone()
+        # Actually, the num_samples is the number of a batch of samples.
+        control = torch.stack([control for _ in range(num_samples)], dim=0)# Repeat the edge map for all samples
+        control = einops.rearrange(control, 'b h w c -> b c h w').clone()# Convert to BCHW format.
 
         if seed == -1:
             seed = random.randint(0, 65535)
@@ -47,7 +49,7 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
         shape = (4, H // 8, W // 8)
 
         if config.save_memory:
-            model.low_vram_shift(is_diffusing=True)
+            model.low_vram_shift(is_diffusing=True)# copy the controlnet to the GPU.
 
         model.control_scales = [strength * (0.825 ** float(12 - i)) for i in range(13)] if guess_mode else ([strength] * 13)  # Magic number. IDK why. Perhaps because 0.825**12<0.01 but 0.826**12>0.01
         samples, intermediates = ddim_sampler.sample(ddim_steps, num_samples,

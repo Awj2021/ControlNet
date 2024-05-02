@@ -1,4 +1,4 @@
-name: control
+name: control_pc
 channels:
   - pytorch
   - defaults
