@@ -15,7 +15,7 @@ def train():
 
 # Configs
     resume_path = './models/control_sd15_ini.ckpt'# firstly run the copy file.
-    batch_size = 2
+    batch_size = 12
     logger_freq = 300
     learning_rate = 1e-5
     sd_locked = True
