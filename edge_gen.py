@@ -22,10 +22,11 @@ def process_image(img_name):
         H, W, C = img.shape
 
         detected_map = apply_canny(HWC3(img), low_threshold, high_threshold)
-        detected_map = HWC3(detected_map)
-        np.save(os.path.join(result_dir, f'{img_name}.npy'), detected_map)
-        cv2.imwrite(os.path.join(result_dir, f'{img_name}.jpg'), detected_map)
-        # cv2.imwrite(os.path.join(result_dir, f'{img_name}.png'), detected_map)
+
+        np.save(os.path.join(result_dir, f'{img_name[:-4]}.npy'), detected_map)
+        # Due to the size of the image is too large, so we save the image as .npy file.
+        # detected_map = HWC3(detected_map)
+        # cv2.imwrite(os.path.join(result_dir, f'{img_name}.jpg'), detected_map)
     except Exception as e:
         print(f"Error in processing {img_name}: {e}")
 
@@ -45,26 +46,49 @@ def Canny_images(img_list, data_dir, result_dir, image_solution, low_threshold, 
 
 if __name__ == '__main__':
     # Firstly judge the image list file exists or not.
-    if not os.path.exists('./training/quilt_1M_img_list.txt'):
-        print("Please check the image list file. Now generating is starting...")
-        df = pd.read_csv('./training/quilt_1M_lookup.csv')
-        # filter the duplicated images.
-        print(f"Before filtering: {len(df)}")
-        df = df.drop_duplicates(subset='image_path')
-        img_list = df['image_path'].to_list()
-        print(f"Total images: {len(img_list)}")
+    # Only save the part of the image list. 
 
-    # save the img_list for further use.
-        with open('./training/quilt_1M_img_list.txt', 'w') as f:
-            for img in img_list:
-                f.write(img + '\n')
+    ################ Attention: Please Change the switch before running. ################
+    test_part = False
+    if test_part:
+        if not os.path.exists('./training/quilt_1M_img_list_part.txt'):
+            print("Please check the image list file. Now generating is starting...")
+            df = pd.read_csv('./training/quilt_1M_lookup.csv')
+            # filter the duplicated images.
+            print(f"Before filtering: {len(df)}")
+            df = df.drop_duplicates(subset='image_path')
+            img_list = df['image_path'].to_list()
+            print(f"Total images: {len(img_list)}")
+            img_list = img_list[:1000]  # with the suffix of .jpg
+        # save the img_list for further use.
+            with open('./training/quilt_1M_img_list_part.txt', 'w') as f:
+                for img in img_list:
+                    f.write(img + '\n')
+        else:
+            with open('./training/quilt_1M_img_list_part.txt', 'r') as f:
+                img_list = f.readlines()
+                img_list = [img.strip() for img in img_list]
     else:
-        with open('./training/quilt_1M_img_list.txt', 'r') as f:
-            img_list = f.readlines()
-            img_list = [img.strip() for img in img_list]
+        if not os.path.exists('./training/quilt_1M_img_list.txt'):
+            print("Please check the image list file. Now generating is starting...")
+            df = pd.read_csv('./training/quilt_1M_lookup.csv')
+            # filter the duplicated images.
+            print(f"Before filtering: {len(df)}")
+            df = df.drop_duplicates(subset='image_path')
+            img_list = df['image_path'].to_list()
+            print(f"Total images: {len(img_list)}")
+
+        # save the img_list for further use.
+            with open('./training/quilt_1M_img_list.txt', 'w') as f:
+                for img in img_list:
+                    f.write(img + '\n')
+        else:
+            with open('./training/quilt_1M_img_list.txt', 'r') as f:
+                img_list = f.readlines()
+                img_list = [img.strip() for img in img_list]
 
     data_dir = './training/quilt_1m'
-    result_dir = './training/quilt_1m_edge'
+    result_dir = './training/quilt_1m_edge_part' if test_part else './training/quilt_1m_edge'
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
     image_solution = 512

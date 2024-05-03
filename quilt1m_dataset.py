@@ -4,13 +4,14 @@ import numpy as np
 import ipdb
 import os
 from torch.utils.data import Dataset
+from annotator.util import resize_image, HWC3
 
 
 # TODO: add more data augmentation for source images.
 class MyDataset(Dataset):
     def __init__(self):
         self.data = []
-        with open('./training/prompt.json', 'rt') as f:
+        with open('./training/quilt_1M_prompt_part.json', 'rt') as f:
             # for line in f:
                 # self.data.append(json.loads(line))
             # with open('./training/prompt.json', 'rt') as f:
@@ -24,16 +25,16 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
 
-        source_filename = os.path.join(self.data_dir, item['source'])
+        # source_filename = os.path.join(self.data_dir, item['source'])
+        source_filename = os.path.join(self.data_dir, os.path.splitext(item['source'])[0] + '.npy')
         target_filename = os.path.join(self.data_dir, item['target'])
         # ipdb.set_trace()
         assert os.path.exists(source_filename), f"Source file does not exist: {source_filename}"
         assert os.path.exists(target_filename), f"Target file does not exist: {target_filename}"
         prompt = item['prompt']
-
-        source = cv2.imread(source_filename)
+        source = HWC3(np.load(source_filename))
+        
         target = cv2.imread(target_filename)
-        # ipdb.set_trace()
         # Do not forget that OpenCV read images in BGR order.
         source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)
         target = cv2.cvtColor(target, cv2.COLOR_BGR2RGB)
