@@ -34,8 +34,8 @@ def train():
     # Misc
     dataset = MyDataset()
     dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
-    logger = ImageLogger(save_dir=save_dir, batch_frequency=logger_freq)
     wandb_logger = WandbLogger(name='control_sd15_ini_finetuning_quilt1M', project='cldm')
+    logger = ImageLogger(save_dir=save_dir, batch_frequency=logger_freq, logger=wandb_logger)
 
     trainer = pl.Trainer(gpus=1, precision=16, callbacks=[logger], logger=wandb_logger, max_epochs=100)
     # Train!

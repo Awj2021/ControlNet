@@ -11,7 +11,7 @@ from annotator.util import resize_image, HWC3
 class MyDataset(Dataset):
     def __init__(self):
         self.data = []
-        with open('./training/quilt_1M_prompt_part.json', 'rt') as f:
+        with open('./training/quilt_1M_prompt.json', 'rt') as f:
             # for line in f:
                 # self.data.append(json.loads(line))
             # with open('./training/prompt.json', 'rt') as f:
