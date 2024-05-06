@@ -5,6 +5,8 @@ import os
 
 def save_prompt_json(folder, data, prompt_path):
     # folder = 'quilt_1m_edge/'
+    # Filter some irregular data.
+    data = data[data['caption'].apply(lambda x: isinstance(x, str) and len(x) > 0)]
     data['edge_path'] = folder + data['image_path'] 
     data['image_path'] = 'quilt_1m/' + data['image_path']
 
