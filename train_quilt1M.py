@@ -3,6 +3,7 @@ import os
 # os.environ['WANDB_ARTIFACT_DIR'] = '/vol/research/wenjieProject/projects/owns/ControlNet/wandb_artifact'
 from share import *
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from quilt1m_dataset import MyDataset
@@ -12,15 +13,21 @@ from cldm.model import create_model, load_state_dict
 
 # write the code with function. and add the __main__ function.
 def train():
-
-# Configs
+    # TODO: Please finish the model saving functions.
+    # Configs
     resume_path = './models/control_sd15_ini.ckpt'# firstly run the copy file.
     batch_size = 12
-    logger_freq = 300
+    logger_freq = 500
     learning_rate = 1e-5
     sd_locked = True
     only_mid_control = False
     save_dir = './logs'
+    # TODO: task name should add the machine name.
+    machine_name = os.uname()[1]
+    task_name = f'finetuning_quilt1M_{machine_name}'
+    model_dir = os.path.join(save_dir, 'models', task_name)
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
 
 
     # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
@@ -34,10 +41,16 @@ def train():
     # Misc
     dataset = MyDataset()
     dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
-    wandb_logger = WandbLogger(name='control_sd15_ini_finetuning_quilt1M', project='cldm')
+    # wandb_logger = WandbLogger(name='control_sd15_ini_finetuning_quilt1M', project='cldm')
+    wandb_logger = WandbLogger(name=f'control_sd15_ini_condor_{task_name}', project='cldm')
     logger = ImageLogger(save_dir=save_dir, batch_frequency=logger_freq, logger=wandb_logger)
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=save_dir,
+        filename='control_sd15_ini_{task_name}-{epoch:02d}-{steps:07d}',
+        every_n_train_steps=10000
+    )
 
-    trainer = pl.Trainer(gpus=1, precision=16, callbacks=[logger], logger=wandb_logger, max_epochs=100)
+    trainer = pl.Trainer(gpus=1, precision=16, callbacks=[logger, checkpoint_callback], logger=wandb_logger, max_epochs=100)
     # Train!
     trainer.fit(model, dataloader)
 
