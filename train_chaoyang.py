@@ -48,9 +48,8 @@ def train():
     wandb_logger = WandbLogger(name=f'control_sd15_ini_{timestamp}', project=f'cldm_{task_name}')
     logger = ImageLogger(save_dir=save_dir, batch_frequency=logger_freq, logger=wandb_logger)
     checkpoint_callback = ModelCheckpoint(
-        dirpath=save_dir,
+        dirpath=model_dir,
         filename='control_sd15_ini_{task_name}-{epoch:02d}-{steps:07d}',
-        every_n_epochs = 1,
     )
 
     trainer = pl.Trainer(gpus=[1], precision=16, callbacks=[logger, checkpoint_callback], logger=wandb_logger, max_epochs=100)

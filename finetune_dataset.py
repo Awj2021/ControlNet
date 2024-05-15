@@ -1,10 +1,12 @@
 import json
 import cv2
 import numpy as np
-# import ipdb
+import ipdb
 import os
 from torch.utils.data import Dataset
 from annotator.util import resize_image, HWC3
+from torchvision import transforms
+from PIL import Image
 
 
 # TODO: add more data augmentation for source images.
@@ -82,6 +84,35 @@ class ChaoyangDataset(Dataset):
 
         return dict(jpg=target, txt=prompt, hint=source)
 
+
+class ChaoyangTestDataset(Dataset):
+    def __init__(self):
+        self.data = []
+        with open('./training/chaoyang/test_prompt.json', 'rt') as f:
+            self.data = json.load(f)
+        self.data_dir = './training/chaoyang'
+        self.to_tensor = transforms.ToTensor()
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        name = os.path.basename(item['source']) # name: 537688_1-IMG005x003-3_70_190.npy
+        source_filename = os.path.join(self.data_dir, item['source']) 
+        assert os.path.exists(source_filename), f"Source file does not exist: {source_filename}"
+        prompt = item['prompt']
+        source = HWC3(np.load(source_filename))
+        
+        # Do not forget that OpenCV read images in BGR order.
+        # source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)
+        # source = source.astype(np.float32) / 255.0
+
+        source = self.to_tensor(Image.fromarray(source))
+        if len(source.shape) == 2:
+            source = source.convert('RGB')
+
+        return dict(txt=prompt, hint=source, name=name)
 
 # Testing the dataset
 if __name__ == '__main__':
