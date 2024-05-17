@@ -33,11 +33,14 @@ Evaulating the model.
 
 
 ## TODO
-- [ ] Using the pretrained stable diffusion model as listed on the 
+- [x] Using the pretrained stable diffusion model as listed on the 
 huggingface to pretrain on the Quilt1M dataset. 
-- [ ] Using the pretrained model I have trained with Quilt1M dataset to 
-train the ControlNet dataset.
+- [x] Using the pretrained model I have trained with Quilt1M dataset to 
+train the Chaoyang dataset.
 - [x] Generate the edge maps and the json file for training. If I use the 
 quilt1M for pretraining, the training and testing are OK for usage. 
-- [ ] Coding for training the ControlNet with Quilt1M.
-- [ ] Coding for training the Chaoyang Dataset.
+- [x] Coding for training the ControlNet with Quilt1M.
+- [x] Coding for training the Chaoyang Dataset.
+- [ ] Coding for training the Quilt1M dataset with diffusers packages. (Quick, Efficient)
+- [ ] Coding for training the Chaoyang Dataset with diffusers packages.
+- [ ] Coding for Classification Model for Augmented Chaoyang Dataset.

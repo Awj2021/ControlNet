@@ -86,10 +86,17 @@ class ChaoyangDataset(Dataset):
 
 
 class ChaoyangTestDataset(Dataset):
-    def __init__(self):
+    def __init__(self, prompt_path=None):
         self.data = []
-        with open('./training/chaoyang/test_prompt.json', 'rt') as f:
-            self.data = json.load(f)
+        self.prompt_path = prompt_path
+        # ipdb.set_trace()
+        if self.prompt_path is not None:
+            with open(self.prompt_path, 'rt') as f:
+                self.data = json.load(f)
+
+        len_data = len(self.data)
+        print('The length of the test dataset is: ', len_data)
+
         self.data_dir = './training/chaoyang'
         self.to_tensor = transforms.ToTensor()
 
@@ -104,10 +111,6 @@ class ChaoyangTestDataset(Dataset):
         prompt = item['prompt']
         source = HWC3(np.load(source_filename))
         
-        # Do not forget that OpenCV read images in BGR order.
-        # source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)
-        # source = source.astype(np.float32) / 255.0
-
         source = self.to_tensor(Image.fromarray(source))
         if len(source.shape) == 2:
             source = source.convert('RGB')

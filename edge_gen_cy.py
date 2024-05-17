@@ -2,7 +2,7 @@
 Generate the edge map for chaoyang dataset. 
 """
 import sys
-sys.path.insert(0, '/vol/research/wenjieProject/projects/owns/ControlNet')
+sys.path.insert(0, './ControlNet')
 from share import *
 import cv2
 import einops
@@ -94,13 +94,13 @@ def Canny_test_images(data_dir, result_dir):
     print(f"Total images: {len(img_list)}")
 
     image_solution = 512
-    low_thresholds = [30, 50, 70, 90, 110]
-    high_thresholds = [130, 150, 170, 190, 210, 220]
+    low_thresholds = [30, 70, 110]
+    high_thresholds = [130, 170, 210]
 
     # Firstly Test some images.
     low_high_lists = list(itertools.product(low_thresholds, high_thresholds))
     for image in tqdm(img_list):
-        chosen_pairs = random.sample(low_high_lists, 5)
+        chosen_pairs = random.sample(low_high_lists, 2) # randomly choose two pairs for generation.
         for low_high in chosen_pairs:
             low_threshold, high_threshold = low_high
             process_test_image(image, low_threshold, high_threshold, image_solution, data_dir, result_dir)

@@ -9,3 +9,14 @@ set -e
 # /sda2/wenjieProject/miniconda3/envs/control_a61/bin/python edge_gen_cy.py
 # /sda2/wenjieProject/miniconda3/envs/control_a61/bin/python json_gen_cy.py
 # /sda2/wenjieProject/miniconda3/envs/control_a61/bin/python train_chaoyang.py
+export CUDA_VISIBLE_DEVICES=0
+python test_chaoyang.py --prompt_path ./training/chaoyang/test_prompt_part_1.json
+
+# export CUDA_VISIBLE_DEVICES=0
+# python test_chaoyang.py --prompt_path /sda2/wenjieProject/ControlNet/training/chaoyang/test_prompt_part_2.json
+
+# export CUDA_VISIBLE_DEVICES=1
+# python test_chaoyang.py --prompt_path ./training/chaoyang/test_prompt_part_3.json
+
+# export CUDA_VISIBLE_DEVICES=1
+# python test_chaoyang.py --prompt_path ./training/chaoyang/test_prompt_part_4.json

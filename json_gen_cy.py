@@ -67,6 +67,12 @@ def gene_test_prompts(data, mode):
     # 4 classes: 0 -> normal, 1 -> serrated, 2 -> adenocarcinoma, 3 -> adenoma.
     # Please help me map the label to the class.
     label_map = {0: 'normal', 1: 'serrated', 2: 'adenocarcinoma', 3: 'adenoma'}
+
+    # TODO: For one edge map, randomly choose one of the three labels to generate the prompt. 
+    # TODO: But how to generate the ground truth labels for training? (Majority voting?)
+
+    # First Step: Load the data, and do the statistics of the labels combinations.
+    
     if mode == 'text':
         # TODO: Add more text templates for randomly choosing.
         template = "A multi-rater picture of histopathology. Three different annotators have labeled this image as {}, {} and {}." 
