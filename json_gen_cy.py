@@ -7,6 +7,8 @@ import os
 import glob
 import ipdb
 from tqdm import tqdm
+import random
+import argparse
 
 # TODO:
 # 1. read the train json file of chaoyang dataset. The train json file could be changed.
@@ -33,6 +35,31 @@ def extract_json(json_file):
     # return DataFrame.
     return data
 
+def split_prompts(data, args):
+    """
+    data: DataFrame
+    """
+    print("============  Splitting the prompt file...")
+    # with open(args.gen_folder, 'rt') as f:
+        # data = json.load(f)
+    # convert the data to json
+    json_data = data.to_json(orient='records')
+    data = json.loads(json_data)
+
+    # split the json file into 4 parts and saved them.
+    part_size = len(data) // 4
+    parts = [data[i*part_size:(i+1)*part_size] for i in range(4)]
+
+    # If the data size is not a multiple of 4, add the remaining items to the last part
+    if len(data) % 4 != 0:
+        parts[-1] += data[4*part_size:]
+
+    # Save each part separately
+    for i, part in enumerate(parts):
+        with open(os.path.join(args.gen_folder, f'test_prompt_part_{i+1}.json'), 'wt') as f:
+            json.dump(part, f)
+
+
 def gene_prompts(data, mode):
     """
     data: DataFrame
@@ -58,7 +85,7 @@ def gene_prompts(data, mode):
     return data_extract
 
 
-def gene_test_prompts(data, mode):
+def gene_test_prompts(data, args):
     """
     data: DataFrame
     mode: str, 'text' or 'words'
@@ -68,61 +95,107 @@ def gene_test_prompts(data, mode):
     # Please help me map the label to the class.
     label_map = {0: 'normal', 1: 'serrated', 2: 'adenocarcinoma', 3: 'adenoma'}
 
-    # TODO: For one edge map, randomly choose one of the three labels to generate the prompt. 
-    # TODO: But how to generate the ground truth labels for training? (Majority voting?)
+    # TODO: Fix the Original Labels of the data. And then randomly choose the edge images.
 
     # First Step: Load the data, and do the statistics of the labels combinations.
-    
-    if mode == 'text':
+    # ipdb.set_trace()
+    if args.prompt_mode == 'text':
         # TODO: Add more text templates for randomly choosing.
         template = "A multi-rater picture of histopathology. Three different annotators have labeled this image as {}, {} and {}." 
-    elif mode == 'words':
+    elif args.prompt_mode == 'words':
         template = "{}, {}, {}"
     else:
         raise ValueError("The mode is not supported. Please check the mode.")
     # for label in ['label_A', 'label_B', 'label_C']:
     #     data[label] = data[label].apply(lambda x: label_map[x])
     data['prompt'] = data.apply(lambda row: template.format(label_map[row['label_A']], label_map[row['label_B']], label_map[row['label_C']]), axis=1)
-    image_files = [npy for npy in os.listdir('./training/chaoyang/test_edge') if npy.endswith('.npy')] 
+    # image_files = [npy for npy in os.listdir('./training/chaoyang/test_edge') if npy.endswith('.npy')] 
 
     # As I generate all the images of train and test dataset, so to filter those images which are not in the train dataset.
     # assert len(image_files) == 5 * len(data['name'].to_list()), \
     # f"The number of edge files {str(len(image_files))} is not equal to the predicted number of images {str(5*len(data['name']))}."
-    new_rows = []
-    for name in tqdm(data['name'].to_list()):
-        image_prefix = name.split('/')[-1].split('.')[0]
-        matching_files = [file for file in image_files if file.startswith(image_prefix)]
-        # Add the matching_files into the data.
-        for file in matching_files:
-            new_row = data[data['name'] == name].copy()  # actually, the source column does not exist in the original data. So 
-                                                        # if create a new row, the original data will not be changed. Keep Nan values. 
-            assert new_row.shape[0] == 1, "The new_row should have only one row."
-            new_row['gen_source'] = file[:-4] + '.jpg'  # TODO: check the generated image name in file of test_chaoyang.py.
-            new_row['source'] = os.path.join('test_edge', file)
-            new_row['prompt'] = template.format(new_row['label_A'].values[0], new_row['label_B'].values[0], new_row['label_C'].values[0])
-            new_rows.append(new_row)
+
+    # # # version0: matching the edge maps with the original images.
+    # new_rows = []
+    # for name in tqdm(data['name'].to_list()):
+    #     image_prefix = name.split('/')[-1].split('.')[0]
+    #     matching_files = [file for file in image_files if file.startswith(image_prefix)]
+    #     # Add the matching_files into the data.
+    #     for file in matching_files:
+    #         new_row = data[data['name'] == name].copy()  # actually, the source column does not exist in the original data. So 
+    #                                                     # if create a new row, the original data will not be changed. Keep Nan values. 
+    #         assert new_row.shape[0] == 1, "The new_row should have only one row."
+    #         new_row['gen_source'] = file[:-4] + '.jpg'  
+    #         new_row['source'] = os.path.join('test_edge', file)
+    #         new_row['prompt'] = template.format(new_row['label_A'].values[0], new_row['label_B'].values[0], new_row['label_C'].values[0])
+    #         new_rows.append(new_row)
     
+    # new_data = pd.concat(new_rows, ignore_index=True)
+
+    # # # version1: randomly choose the edge maps.
+    new_rows = []
+    edge_map_names = data['name'].apply(lambda x: x.split('/')[-1][:-4]).to_list()
+    # Actually the edge_maps include the train and test edge maps.
+    # the npy is: 537688_1-IMG005x003-3_70_190.npy
+    # element_map_names: 537688_1-IMG005x003-3
+    
+    edge_maps = [npy for npy in os.listdir(args.test_edge_folder) if npy.endswith('.npy') and '_'.join(npy.split('_')[:-2]) in edge_map_names]
+    # ipdb.set_trace()
+    assert len(edge_maps) == 2 * len(data['name'].to_list()), \
+        f"The number of edge maps {len(edge_maps)} is not equal to the 2 times number of original images {2 * len(data['name'].to_list())}."
+    random.shuffle(edge_maps)  # Shuffle the edge_maps randomly
+    for name in tqdm(data['name'].to_list()):
+        for i in range(2):
+            edge_map = edge_maps.pop()
+            new_row = data[data['name'] == name].copy()
+            assert new_row.shape[0] == 1, "The new_row should have only one row."
+            new_row['name'] = os.path.join('gen_test_edge', edge_map[:-4] + '.jpg')
+            new_row['source'] = os.path.join('test_edge', edge_map)
+            # new_row['prompt'] = template.format(new_row['label_A'].values[0], new_row['label_B'].values[0], new_row['label_C'].values[0])
+            new_rows.append(new_row)
     new_data = pd.concat(new_rows, ignore_index=True)
 
-    # save the new_data for chaoyang dataset later processing.
-    save_prompt_json(new_data, './training/chaoyang/original_and_gen.json') 
+    original_and_gen = pd.concat([data, new_data], ignore_index=True)        
+
+    save_prompt_json(original_and_gen, os.path.join(args.gen_folder, 'original_and_gen.json'))  # save it for further classification.
+    # split_prompts(new_data, args)
     # # modify the column name of extracted_data.  name -> target
     new_data.rename(columns={'name': 'target'}, inplace=True)
     data_extract = new_data[['prompt', 'target', 'source']]
+    split_prompts(data_extract, args)
 
     assert data_extract['source'].isnull().sum() == 0, "The source column should not have nan values."
     
     return data_extract
 
 
+def argparser():
+    parser = argparse.ArgumentParser(description='Test the model on the Chaoyang test dataset.')
+    parser.add_argument('--gen_folder', type=str, default='./training/chaoyang/version1', 
+                        help='The folder of process. Including json files and generated image folder.')
+    parser.add_argument('--original_json', type=str, default='./training/chaoyang/json/train_split_2.json',
+                        help='The original json file of the Chaoyang dataset.')
+    parser.add_argument('--test_edge_folder', type=str, default='./training/chaoyang/test_edge', 
+                        help='The folder of test edge maps.') 
+    
+    parser.add_argument('--prompt_mode', type=str, default='text', choices=['text', 'words'], 
+                        help='The mode of generating the prompt. text or words.')
+    parser.add_argument('--split', type=str, default='test', choices=['train', 'test'],
+                        help='The split of the dataset. train or test.')
+    
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == '__main__':
-    split = 'test'
-    json_file = './training/chaoyang/json/train_split_2.json'
+    args = argparser()
+    split = args.split 
+    json_file = args.original_json  # TODO: Please check this json file. Correct or not.
     data = extract_json(json_file)
     if split == 'train':
         data_extract = gene_prompts(data, mode='text')
         save_prompt_json(data_extract, './training/chaoyang/prompt.json')
     elif split == 'test':
-        test_edge_list = os.listdir('./training/chaoyang/test_edge')
-        data_extract = gene_test_prompts(data, mode='text')
-        save_prompt_json(data_extract, './training/chaoyang/test_prompt.json')
+        test_edge_list = os.listdir(args.test_edge_folder)
+        data_extract = gene_test_prompts(data, args)
+        save_prompt_json(data_extract, os.path.join(args.gen_folder, 'test_prompt.json'))

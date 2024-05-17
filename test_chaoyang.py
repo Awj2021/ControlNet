@@ -36,27 +36,11 @@ import argparse
 import logging
 
 
-def split_prompts(prompt_path=None):
-    print("============  Splitting the prompt file...")
-    with open(prompt_path, 'rt') as f:
-        data = json.load(f)
-
-    # split the json file into 4 parts and saved them.
-    part_size = len(data) // 4
-    parts = [data[i*part_size:(i+1)*part_size] for i in range(4)]
-
-    # If the data size is not a multiple of 4, add the remaining items to the last part
-    if len(data) % 4 != 0:
-        parts[-1] += data[4*part_size:]
-
-    # Save each part separately
-    for i, part in enumerate(parts):
-        with open(os.path.join('./training/chaoyang/', f'test_prompt_part_{i+1}.json'), 'wt') as f:
-            json.dump(part, f)
+# move the split_prompts function to the json_gen_cy.py
 
 def argparser():
     parser = argparse.ArgumentParser(description='Test the model on the Chaoyang test dataset.')
-    parser.add_argument('--prompt_path', type=str, default='./training/chaoyang/test_prompt.json', help='The path of the prompt file.')
+    parser.add_argument('--prompt_path', type=str, default='./training/chaoyang/version1/test_prompt.json', help='The path of the prompt file.')
     args = parser.parse_args()
     return args
 
@@ -82,7 +66,7 @@ if __name__ == '__main__':
     pipe.safety_checker = lambda images, clip_input: (images, False)
     logging.info("Model is loaded.")
     # run the model on the test dataset
-    gen_dir = './training/chaoyang/gen_test_edge'
+    gen_dir = './training/chaoyang/version1/gen_test_edge'
     # generator = torch.Generator("cuda").manual_seed(14556)
     if not os.path.exists(gen_dir):
         logging.info(f"Creating the directory: {gen_dir}")
