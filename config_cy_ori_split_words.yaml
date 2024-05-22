@@ -1,0 +1,39 @@
+# Config.yaml is a configuration file that contains the following information:
+# train_chaoyang.py
+# test_chaoyang.py
+# finetune_chaoyang.py
+# json_gen_cy.py
+
+# Please add the version meaning. 
+# version: train_cy_ori_split: train with the original split of the Chaoyang dataset. Also test.
+version:
+  training_version: train_cy_ori_split 
+  testing_version: test_cy_ori_split
+  folder: './training/chaoyang/version_cy_ori_split_words' # TODO: change to words.
+
+train_chaoyang:
+  train_json: './training/chaoyang/json/train_label.json'
+  test_json: './training/chaoyang/json/test.json'
+  save_dir: './logs'
+  model:
+    model_config: './models/cldm_chaoyang_v15.yaml'
+    resume_path: './cldm/7h572t94/checkpoints/finetune_quilt.ckpt'
+    batch_size: 12
+    logger_freq: 100
+    # learning_rate: 1e-6
+    max_epochs: 100 
+    num_workers: 4
+
+dataset:
+  prompt_train_name: 'train_prompt.json' 
+  prompt_test_name: 'test_prompt.json'
+  prompt_mode: 'words'      # TODO: change to words.
+  # Edge Maps
+  edge_train_path: './training/chaoyang/train_edge'            # including all images of train and test
+
+  edge_test_folder: 'test_cy_edge_ori_split' 
+  edge_test_path: './training/chaoyang/test_cy_edge_ori_split' # Only including the train images -> train -> edge maps.
+  gen_folder: 'data_aug_images'  # data augmentation folder. 
+
+test_chaoyang:
+  model_dir: './logs/models/finetuning_chaoyang_ulws070.surrey.ac.uk_words/control_cy_words'

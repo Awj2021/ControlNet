@@ -13,12 +13,12 @@ from PIL import Image
 class Quilt(Dataset):
     def __init__(self):
         self.data = []
-        with open('./training/quilt_1M_prompt.json', 'rt') as f:
+        with open("./training/quilt_1M_prompt.json", "rt") as f:
             # for line in f:
-                # self.data.append(json.loads(line))
+            # self.data.append(json.loads(line))
             # with open('./training/prompt.json', 'rt') as f:
             self.data = json.load(f)
-        self.data_dir = '/vol/research/wenjieProject/projects/owns/ControlNet/training'
+        self.data_dir = "/vol/research/wenjieProject/projects/owns/ControlNet/training"
         # ipdb.set_trace()
 
     def __len__(self):
@@ -28,14 +28,20 @@ class Quilt(Dataset):
         item = self.data[idx]
 
         # source_filename = os.path.join(self.data_dir, item['source'])
-        source_filename = os.path.join(self.data_dir, os.path.splitext(item['source'])[0] + '.npy')
-        target_filename = os.path.join(self.data_dir, item['target'])
+        source_filename = os.path.join(
+            self.data_dir, os.path.splitext(item["source"])[0] + ".npy"
+        )
+        target_filename = os.path.join(self.data_dir, item["target"])
         # ipdb.set_trace()
-        assert os.path.exists(source_filename), f"Source file does not exist: {source_filename}"
-        assert os.path.exists(target_filename), f"Target file does not exist: {target_filename}"
-        prompt = item['prompt']
+        assert os.path.exists(
+            source_filename
+        ), f"Source file does not exist: {source_filename}"
+        assert os.path.exists(
+            target_filename
+        ), f"Target file does not exist: {target_filename}"
+        prompt = item["prompt"]
         source = HWC3(np.load(source_filename))
-        
+
         target = cv2.imread(target_filename)
         # Do not forget that OpenCV read images in BGR order.
         source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)
@@ -51,11 +57,11 @@ class Quilt(Dataset):
 
 
 class ChaoyangDataset(Dataset):
-    def __init__(self):
+    def __init__(self, prompt_path=None):
         self.data = []
-        with open('./training/chaoyang/prompt.json', 'rt') as f:
+        with open(prompt_path, "rt") as f:
             self.data = json.load(f)
-        self.data_dir = './training/chaoyang'
+        self.data_dir = "./training/chaoyang"
 
     def __len__(self):
         return len(self.data)
@@ -63,14 +69,20 @@ class ChaoyangDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
 
-        source_filename = os.path.join(self.data_dir, os.path.splitext(item['source'])[0] + '.npy')
-        target_filename = os.path.join(self.data_dir, item['target'])
+        source_filename = os.path.join(
+            self.data_dir, os.path.splitext(item["source"])[0] + ".npy"
+        )
+        target_filename = os.path.join(self.data_dir, item["target"])
         # ipdb.set_trace()
-        assert os.path.exists(source_filename), f"Source file does not exist: {source_filename}"
-        assert os.path.exists(target_filename), f"Target file does not exist: {target_filename}"
-        prompt = item['prompt']
+        assert os.path.exists(
+            source_filename
+        ), f"Source file does not exist: {source_filename}"
+        assert os.path.exists(
+            target_filename
+        ), f"Target file does not exist: {target_filename}"
+        prompt = item["prompt"]
         source = HWC3(np.load(source_filename))
-        
+
         target = cv2.imread(target_filename)
         # Do not forget that OpenCV read images in BGR order.
         source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)
@@ -91,13 +103,13 @@ class ChaoyangTestDataset(Dataset):
         self.prompt_path = prompt_path
         # ipdb.set_trace()
         if self.prompt_path is not None:
-            with open(self.prompt_path, 'rt') as f:
+            with open(self.prompt_path, "rt") as f:
                 self.data = json.load(f)
 
         len_data = len(self.data)
-        print('The length of the test dataset is: ', len_data)
+        print("The length of the test dataset is: ", len_data)
 
-        self.data_dir = './training/chaoyang'
+        self.data_dir = "./training/chaoyang"
         self.to_tensor = transforms.ToTensor()
 
     def __len__(self):
@@ -105,24 +117,29 @@ class ChaoyangTestDataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.data[idx]
-        name = os.path.basename(item['source']) # name: 537688_1-IMG005x003-3_70_190.npy
-        source_filename = os.path.join(self.data_dir, item['source']) 
-        assert os.path.exists(source_filename), f"Source file does not exist: {source_filename}"
-        prompt = item['prompt']
+        name = os.path.basename(
+            item["source"]
+        )  # name: 537688_1-IMG005x003-3_70_190.npy
+        source_filename = os.path.join(self.data_dir, item["source"])
+        assert os.path.exists(
+            source_filename
+        ), f"Source file does not exist: {source_filename}"
+        prompt = item["prompt"]
         source = HWC3(np.load(source_filename))
-        
+
         source = self.to_tensor(Image.fromarray(source))
         if len(source.shape) == 2:
-            source = source.convert('RGB')
+            source = source.convert("RGB")
 
         return dict(txt=prompt, hint=source, name=name)
 
+
 # Testing the dataset
-if __name__ == '__main__':
-    dataset = ChaoyangDataset() 
+if __name__ == "__main__":
+    dataset = ChaoyangDataset()
     print(len(dataset))
 
     for i in range(3):
         item = dataset[i]
-        print(item['jpg'].shape, item['txt'], item['hint'].shape)
+        print(item["jpg"].shape, item["txt"], item["hint"].shape)
         print()
